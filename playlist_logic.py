@@ -32,22 +32,35 @@ def normalize_genre(genre: str) -> str:
 
 
 def normalize_song(raw: Song) -> Song:
-    """Return a normalized song dict with expected keys."""
+    """Return a normalized song dict with expected keys.
+
+    The incoming `raw` dictionary may contain values of the wrong type
+    (strings for numbers, a single tag instead of a list, etc).  This
+    helper enforces the shape the rest of the code expects:
+      * title/artist/genre are stripped/lowercased
+      * energy is an integer, defaulting to 0 on failure
+      * tags is always a list
+    """
+
+    # normalize textual fields using existing helpers
     title = normalize_title(str(raw.get("title", "")))
     artist = normalize_artist(str(raw.get("artist", "")))
     genre = normalize_genre(str(raw.get("genre", "")))
-    energy = raw.get("energy", 0)
 
+    # energy may arrive as a string; coerce to int or fall back
+    energy = raw.get("energy", 0)
     if isinstance(energy, str):
         try:
             energy = int(energy)
         except ValueError:
             energy = 0
 
+    # tags can be missing, a single string, or already a list
     tags = raw.get("tags", [])
     if isinstance(tags, str):
         tags = [tags]
 
+    # return a new dictionary with the cleaned values
     return {
         "title": title,
         "artist": artist,
